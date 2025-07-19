@@ -110,7 +110,7 @@ print("Conditional Wednesday Profit Probability:", cond_prob_wed_profit(file_pat
 
 scatter_chg_by_day(file_path)
 
-# Q4-Q9: Preprocessing & Similarity
+# Q4-Q9: Preprocesing & Similariy
 def read_dataset(path, sheet_index):
     return pd.read_excel(path, sheet_name=sheet_index).dropna(axis=1)
 
