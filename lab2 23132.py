@@ -1,4 +1,5 @@
-# LAB 2 ASSSIGNMENT
+# LAB 2 ASSIGNMENT
+
 import numpy as np
 import pandas as pd
 import statistics
@@ -8,7 +9,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 file_path = "/content/Lab Session Data.xlsx"
 
-# Q1: Data matrix information extraction
+# Q1: Extract matrix info 
 def extract_matrix_details(path, sheet_index):
     df = pd.read_excel(path, sheet_name=sheet_index).dropna(axis=1)
 
@@ -22,7 +23,7 @@ def extract_matrix_details(path, sheet_index):
 
     return features, targets, shape, num_vectors, matrix_rank, cost_estimate
 
-# Q2: Classification based on target values
+# Q2: Classification based on Price
 def categorize_products(path, sheet_index):
     df = pd.read_excel(path, sheet_name=sheet_index).dropna(axis=1)
 
@@ -36,7 +37,7 @@ def categorize_products(path, sheet_index):
 
     return category, y, predicted
 
-# Display output for Q1 and Q2
+#  Q1 & Q2 Output 
 result1 = extract_matrix_details(file_path, 0)
 print("Matrix A:\n", result1[0])
 print("Vector C:\n", result1[1])
@@ -50,7 +51,7 @@ print("Category Labels:", result2[0])
 print("Actual Prices:\n", result2[1])
 print("Predicted Prices:\n", result2[2])
 
-# Q3: Mean and Variance of prices
+# Q3: Stats & Probabilities 
 def compute_price_stats(path, sheet_index):
     df = pd.read_excel(path, sheet_name=sheet_index).dropna(axis=1)
     price_data = df["Price"].values
@@ -93,7 +94,7 @@ def scatter_chg_by_day(path, sheet_index=1):
     plt.tight_layout()
     plt.show()
 
-# Output Q3
+#  Q3 Output
 mean_val, var_val = compute_price_stats(file_path, 1)
 print("Mean Price:", mean_val)
 print("Price Variance:", var_val)
@@ -110,15 +111,17 @@ print("Conditional Wednesday Profit Probability:", cond_prob_wed_profit(file_pat
 
 scatter_chg_by_day(file_path)
 
-# Q4-Q9: Preprocesing & Similariy
+#  Q4: Read Dataset 
 def read_dataset(path, sheet_index):
     return pd.read_excel(path, sheet_name=sheet_index).dropna(axis=1)
 
+#  Q5: Split Columns 
 def split_columns(df):
     cat = [col for col in df.columns if df[col].dtype == object]
     num = [col for col in df.columns if df[col].dtype != object]
     return cat, num
 
+# Q6: Encode Categorical Columns 
 def encode_categoricals(df, cat_cols):
     df_encoded = df.copy()
     encoders = {}
@@ -132,6 +135,7 @@ def encode_categoricals(df, cat_cols):
             df_encoded = pd.get_dummies(df_encoded, columns=[col], prefix=col)
     return df_encoded, encoders
 
+# Q7: Detect Missing, Ranges, Outliers, Stats 
 def detect_missing(df):
     result = []
     for col in df.columns:
@@ -158,6 +162,30 @@ def identify_outliers(df, num_cols):
 def col_stats(df, num_cols):
     return [[col, statistics.mean(df[col]), statistics.variance(df[col])] for col in num_cols]
 
+# Q8: Impute Missing Values 
+def imputing_missing_values(df):
+    df.replace('?', np.nan, inplace=True)
+    cat_cols, num_cols = split_columns(df)
+
+    for col in num_cols:
+        if df[col].isnull().sum() > 0:
+            skewness = df[col].skew()
+            value = df[col].median() if abs(skewness) > 1 else df[col].mean()
+            df[col].fillna(value, inplace=True)
+
+    for col in cat_cols:
+        if df[col].isnull().sum() > 0:
+            df[col].fillna(df[col].mode()[0], inplace=True)
+
+    return df
+
+# Q9: Standardize 
+def standardize(df, num_cols):
+    scaler = StandardScaler()
+    df[num_cols] = scaler.fit_transform(df[num_cols])
+    return df
+
+# Q10: Similarity Metrics
 def jc_smc_metrics(v1, v2):
     v1 = np.where(pd.to_numeric(v1, errors='coerce') > 0, 1, 0)
     v2 = np.where(pd.to_numeric(v2, errors='coerce') > 0, 1, 0)
@@ -199,30 +227,7 @@ def plot_similarity_matrices(df, num_vectors=20):
     axes[2].set_title("Cosine Similarity")
     plt.tight_layout()
     plt.show()
-
-def fill_missing(df):
-    num_cols, cat_cols = split_columns(df)
-
-    for col in num_cols:
-        if df[col].isnull().sum() > 0:
-            if abs(df[col].skew()) > 1:
-                imputed = df[col].median()
-            else:
-                imputed = df[col].mean()
-            df[col].fillna(imputed, inplace=True)
-
-    for col in cat_cols:
-        if df[col].isnull().sum() > 0:
-            df[col].fillna(df[col].mode()[0], inplace=True)
-
-    return df
-
-def standardize(df, num_cols):
-    scaler = StandardScaler()
-    df[num_cols] = scaler.fit_transform(df[num_cols])
-    return df
-
-# Run Q4 to Q9
+#running q4-q10
 df = read_dataset(file_path, 2)
 cat_cols, num_cols = split_columns(df)
 print("Categorical:", cat_cols)
@@ -230,7 +235,7 @@ print("Numerical:", num_cols)
 print("Missing Data:", detect_missing(df))
 
 encoded_df, enc_map = encode_categoricals(df, cat_cols)
-encoded_df = fill_missing(encoded_df)
+encoded_df = imputing_missing_values(encoded_df)
 print("Ranges:", column_ranges(encoded_df, num_cols))
 print("Outliers:", identify_outliers(encoded_df, num_cols))
 print("Mean & Variance:", col_stats(encoded_df, num_cols))
